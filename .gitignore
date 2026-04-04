@@ -1,0 +1,6 @@
+.env
+tmp/
+samples/
+.venv/
+__pycache__/
+.serverless/

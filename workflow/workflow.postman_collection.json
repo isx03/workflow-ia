@@ -1,0 +1,119 @@
+{
+    "info": {
+        "name": "Workflow IA (Serverless)",
+        "description": "Colección de pruebas para endpoints Serverless del Agente IA",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Registro de Usuario",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Juan Perez\",\n    \"email\": \"juan.perez@example.com\",\n    \"password\": \"secure123\"\n}"
+                },
+                "url": {
+                    "raw": "{{api_url}}/register",
+                    "host": [
+                        "{{api_url}}"
+                    ],
+                    "path": [
+                        "register"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "2. Login de Usuario",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"juan.perez@example.com\",\n    \"password\": \"secure123\"\n}"
+                },
+                "url": {
+                    "raw": "{{api_url}}/login",
+                    "host": [
+                        "{{api_url}}"
+                    ],
+                    "path": [
+                        "login"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "3. Listar Resultados",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{api_url}}/results",
+                    "host": [
+                        "{{api_url}}"
+                    ],
+                    "path": [
+                        "results"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "4. Iniciar Workflow IA",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"files\": [\n        {\n            \"file_name\": \"test_reporte_01.pdf\",\n            \"content_base64\": \"JVBERi0xLjQKJcOkw7zDtsOf... (inserta tu base64 del pdf real aqui)\"\n        }\n    ]\n}"
+                },
+                "url": {
+                    "raw": "{{api_url}}/workflow",
+                    "host": [
+                        "{{api_url}}"
+                    ],
+                    "path": [
+                        "workflow"
+                    ]
+                }
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "api_url",
+            "value": "https://xyz123.execute-api.us-east-1.amazonaws.com"
+        },
+        {
+            "key": "jwt_token",
+            "value": "INSERTA_TU_TOKEN_AQUI"
+        }
+    ]
+}
