@@ -1,9 +1,6 @@
 service: workflow-ia
 frameworkVersion: "4"
 
-plugins:
-  - serverless-python-requirements
-
 provider:
   name: aws
   runtime: python3.14
@@ -21,7 +18,6 @@ provider:
       Ref: UsersTable
     RESULTS_TABLE_NAME:
       Ref: WorkflowResultsTable
-    S3_BUCKET_NAME: workflow-ia-files-${aws:accountId}-${sls:stage}
     S3_TENANTS_PATH: ${env:S3_TENANTS_PATH, "s3://iafg-cdia-cloud-computing/final-project-workflow/tenants/"}
     S3_INSTRUCTIONS_PATH: ${env:S3_INSTRUCTIONS_PATH, "s3://iafg-cdia-cloud-computing/final-project-workflow/agente-seleccionador-inquilinos.md"}
   httpApi:
