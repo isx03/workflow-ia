@@ -275,12 +275,11 @@ def start_workflow(event, context):
                     "instructions_path": instructions_path
                 }
 
-                # response = stepfunctions.start_execution(
-                #     stateMachineArn=state_machine_arn,
-                #     input=json.dumps(input_payload)
-                # )
-                # executions.append(response.get('executionArn'))
-                executions.append(1)
+                response = stepfunctions.start_execution(
+                    stateMachineArn=state_machine_arn,
+                    input=json.dumps(input_payload)
+                )
+                executions.append(response.get('executionArn'))
             except Exception as loop_e:
                 tb = traceback.format_exc()
                 error_msg = f"File '{file_name}': {type(loop_e).__name__}: {loop_e}"

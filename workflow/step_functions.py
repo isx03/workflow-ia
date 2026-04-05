@@ -1,11 +1,12 @@
 import json
 import os
 import boto3
-import urllib.request
 import urllib.error
 import datetime
 import base64
 import decimal
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
@@ -40,6 +41,7 @@ def build_prompt(instructions_markdown: str, content_markdown: str) -> str:
     )
 
 def evaluate_file(event, context):
+    body = None
     try:
         file_path = event.get('file_path')
         instructions_path = event.get('instructions_path')
@@ -50,11 +52,7 @@ def evaluate_file(event, context):
         prompt = build_prompt(instructions, content)
 
         url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {groq_api_key}",
-            "Content-Type": "application/json"
-        }
-        data = {
+        payload = {
             "model": "llama-3.3-70b-versatile",
             "messages": [
                 {"role": "user", "content": prompt}
@@ -62,17 +60,39 @@ def evaluate_file(event, context):
             "response_format": {"type": "json_object"}
         }
 
-        req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
-        with urllib.request.urlopen(req) as response:
-            res_body = response.read().decode('utf-8')
-            res_json = json.loads(res_body)
-            groq_response = res_json['choices'][0]['message']['content']
+        body = json.dumps(payload).encode('utf-8')
 
-        event['groq_response'] = groq_response
+        request = Request(
+            url,
+            data=body,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {groq_api_key}",
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/121.0.0.0 Safari/537.36"
+                )
+            },
+            method="POST",
+        )
+
+        try:
+            with urlopen(request, timeout=60) as response:
+                response_json = json.loads(response.read().decode("utf-8"))
+        except HTTPError as error:
+            error_body = error.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"Groq devolvio HTTP {error.code}: {error_body}") from error
+        except URLError as error:
+            raise RuntimeError(f"No se pudo conectar con Groq: {error.reason}") from error
+
+        event['groq_response'] = response_json['choices'][0]['message']['content']
         return event
 
     except Exception as e:
         print(f"Error in evaluate_file: {e}")
+        print(f"APIKEY: {groq_api_key}")
+        print(f"evaluate_file - Body: {body}")
         raise e
 
 def save_result(event, context):
