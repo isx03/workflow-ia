@@ -1,9 +1,14 @@
 service: final-project-workflow-ia
 frameworkVersion: "4"
 
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    zip: true
+
 provider:
   name: aws
-  runtime: python3.14
+  runtime: python3.12
   region: us-east-1
   architecture: x86_64
   iam:
