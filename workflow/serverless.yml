@@ -107,11 +107,6 @@ resources:
           - AttributeName: createdAt
             KeyType: RANGE
 
-    WorkflowFilesBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: workflow-ia-files-${aws:accountId}-${sls:stage}
-
     WorkflowStateMachine:
       Type: AWS::StepFunctions::StateMachine
       Properties:

@@ -115,7 +115,7 @@ def start_workflow(event, context):
 
         s3_tenants_path = os.environ.get('S3_TENANTS_PATH', 's3://iafg-cdia-cloud-computing/final-project-workflow/tenants/')
         
-        target_bucket = os.environ.get('S3_BUCKET_NAME')
+        target_bucket = ''
         target_prefix = "tenants/"
         
         if s3_tenants_path.startswith('s3://'):
