@@ -91,8 +91,6 @@ def evaluate_file(event, context):
 
     except Exception as e:
         print(f"Error in evaluate_file: {e}")
-        print(f"APIKEY: {groq_api_key}")
-        print(f"evaluate_file - Body: {body}")
         raise e
 
 def save_result(event, context):

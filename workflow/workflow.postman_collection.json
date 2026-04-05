@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "Workflow IA (Serverless)",
-        "description": "Colección de pruebas para endpoints Serverless del Agente IA",
+        "description": "Colección de pruebas para endpoints Serverless del Agente IA.\n\nEl endpoint /workflow ahora acepta archivos PDF vía multipart/form-data (recomendado) en lugar de base64 dentro de JSON.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -77,22 +77,32 @@
             }
         },
         {
-            "name": "4. Iniciar Workflow IA",
+            "name": "4. Iniciar Workflow IA (form-data)",
             "request": {
                 "method": "POST",
                 "header": [
                     {
                         "key": "Authorization",
                         "value": "Bearer {{jwt_token}}"
-                    },
-                    {
-                        "key": "Content-Type",
-                        "value": "application/json"
                     }
                 ],
                 "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"files\": [\n        {\n            \"file_name\": \"test_reporte_01.pdf\",\n            \"content_base64\": \"JVBERi0xLjQKJcOkw7zDtsOf... (inserta tu base64 del pdf real aqui)\"\n        }\n    ]\n}"
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "files",
+                            "description": "Archivo PDF a evaluar. Puedes agregar mas filas con la misma key 'files' para enviar multiples PDFs.",
+                            "type": "file",
+                            "src": []
+                        },
+                        {
+                            "key": "instructions_path",
+                            "value": "",
+                            "description": "(Opcional) Ruta S3 de las instrucciones. Si se omite, se usa la variable de entorno S3_INSTRUCTIONS_PATH del servidor.",
+                            "type": "text",
+                            "disabled": true
+                        }
+                    ]
                 },
                 "url": {
                     "raw": "{{api_url}}/workflow",
@@ -102,7 +112,8 @@
                     "path": [
                         "workflow"
                     ]
-                }
+                },
+                "description": "Sube uno o mas archivos PDF usando form-data.\n\n**Pasos:**\n1. En la pestaña Body, selecciona 'form-data'.\n2. Agrega una fila con key = 'files', tipo = File, y selecciona tu PDF.\n3. Para multiples archivos, agrega mas filas con la misma key 'files'.\n4. (Opcional) Habilita 'instructions_path' si quieres sobreescribir la ruta de instrucciones S3.\n\n**Nota:** No pongas Content-Type en los headers manualmente; Postman lo genera automáticamente con el boundary correcto."
             }
         }
     ],
