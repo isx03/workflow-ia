@@ -131,12 +131,14 @@ def start_workflow(event, context):
 
         s3_client = boto3.client('s3')
         executions = []
+        errors = []
 
         for f in files:
             try:
                 file_name = f.get('file_name') or f.get('name')
                 content_b64 = f.get('content_base64')
                 if not file_name or not content_b64:
+                    errors.append(f"File skipped: missing file_name or content_base64")
                     continue
 
                 pdf_bytes = base64.b64decode(content_b64)
@@ -190,10 +192,12 @@ def start_workflow(event, context):
                 )
                 executions.append(response.get('executionArn'))
             except Exception as loop_e:
-                print(f"File skipped due to error processing {f.get('file_name', 'unknown')}: {loop_e}")
+                error_msg = f"File '{f.get('file_name', 'unknown')}': {type(loop_e).__name__}: {loop_e}"
+                print(f"File skipped due to error processing: {error_msg}")
+                errors.append(error_msg)
 
         if len(executions) == 0:
-            return generate_response(400, {"message": "No valid files processed"})
+            return generate_response(400, {"message": "No valid files processed", "errors": errors})
 
         return generate_response(202, {
             "message": f"Workflow started successfully for {len(executions)} files",
