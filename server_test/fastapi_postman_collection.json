@@ -1,0 +1,219 @@
+{
+    "info": {
+        "name": "FastAPI Server Test - Workflow IA",
+        "description": "Pruebas de rutas de FastAPI emulando AWS Lambda",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Registro de Usuario (Local)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Juan Local\",\n    \"email\": \"juan.local@example.com\",\n    \"password\": \"secure123\"\n}"
+                },
+                "url": {
+                    "raw": "http://127.0.0.1:8000/register",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "register"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "2. Login de Usuario (Local)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"juan.local@example.com\",\n    \"password\": \"secure123\"\n}"
+                },
+                "url": {
+                    "raw": "http://127.0.0.1:8000/login",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "login"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "3. Listar Resultados (Local)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{local_jwt_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "http://127.0.0.1:8000/results",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "results"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "4. Iniciar Workflow IA (Local)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{local_jwt_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"files\": [\n        {\n            \"file_name\": \"test_reporte_01.pdf\",\n            \"content_base64\": \"JVBERi0xLjQKJcOkw7zDtsOf... (inserta tu base64 del pdf real aqui)\"\n        }\n    ]\n}"
+                },
+                "url": {
+                    "raw": "http://127.0.0.1:8000/workflow",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "workflow"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 1: Evaluate File",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"user_id\": \"test-uuid-123\",\n    \"user_email\": \"juan.local@example.com\",\n    \"file_path\": \"s3://workflow-ia-files-localdev/test_reporte_01.md\",\n    \"instructions_path\": \"s3://iafg-cdia-cloud-computing/final-project-workflow/agente-seleccionador-inquilinos.md\"\n}"
+                },
+                "url": {
+                    "raw": "http://127.0.0.1:8000/step/evaluate_file",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "step",
+                        "evaluate_file"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 2: Save Result",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"user_id\": \"test-uuid-123\",\n    \"user_email\": \"juan.local@example.com\",\n    \"file_path\": \"s3://workflow-ia-files-localdev/test_reporte_01.md\",\n    \"instructions_path\": \"s3://iafg-cdia-cloud-computing/final-project-workflow/agente-seleccionador-inquilinos.md\",\n    \"groq_response\": \"{\\\"Nombre completo\\\": \\\"Inquilino Ficticio\\\", \\\"Puntuaje\\\": \\\"8/10\\\"}\"\n}"
+                },
+                "url": {
+                    "raw": "http://127.0.0.1:8000/step/save_result",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "step",
+                        "save_result"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 3: Generate Report",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"user_id\": \"test-uuid-123\",\n    \"user_email\": \"juan.local@example.com\",\n    \"file_path\": \"s3://workflow-ia-files-localdev/test_reporte_01.md\",\n    \"instructions_path\": \"s3://iafg-cdia-cloud-computing/final-project-workflow/agente-seleccionador-inquilinos.md\",\n    \"groq_response\": \"{\\\"Nombre completo\\\": \\\"Inquilino Ficticio\\\", \\\"Puntuaje\\\": \\\"8/10\\\"}\",\n    \"createdAt\": \"2026-04-03T18:00:00Z\"\n}"
+                },
+                "url": {
+                    "raw": "http://127.0.0.1:8000/step/generate_report",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "step",
+                        "generate_report"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 4: Send Email",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"user_id\": \"test-uuid-123\",\n    \"user_email\": \"juan.local@example.com\",\n    \"file_path\": \"s3://workflow-ia-files-localdev/test_reporte_01.md\",\n    \"instructions_path\": \"s3://iafg-cdia-cloud-computing/final-project-workflow/agente-seleccionador-inquilinos.md\",\n    \"groq_response\": \"{\\\"Nombre completo\\\": \\\"Inquilino Ficticio\\\", \\\"Puntuaje\\\": \\\"8/10\\\"}\",\n    \"createdAt\": \"2026-04-03T18:00:00Z\",\n    \"tenant_name\": \"Inquilino Ficticio\",\n    \"report_s3_key\": \"resultados-workflow/Inquilino Ficticio_2026-04-03T18-00-00Z.csv\",\n    \"csv_content\": \"Clave;Valor\\nTenant;Inquilino Ficticio\\nFecha;2026-04-03T18:00:00Z\"\n}"
+                },
+                "url": {
+                    "raw": "http://127.0.0.1:8000/step/send_email",
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "path": [
+                        "step",
+                        "send_email"
+                    ]
+                }
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "local_jwt_token",
+            "value": "INSERTA_TU_TOKEN_AQUI"
+        }
+    ]
+}
