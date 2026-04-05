@@ -147,8 +147,14 @@ def start_workflow(event, context):
                 # Extraer texto del PDF
                 reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
                 raw_text_content = ""
-                for page in reader.pages:
-                    raw_text_content += page.extract_text() + "\n"
+                for page_num, page in enumerate(reader.pages):
+                    try:
+                        page_text = page.extract_text()
+                        if page_text:
+                            raw_text_content += page_text + "\n"
+                    except Exception as page_err:
+                        print(f"Warning: Could not extract text from page {page_num + 1}: {page_err}")
+                        continue
 
                 # Estructurar via IA
                 text_content = format_to_markdown(raw_text_content)
