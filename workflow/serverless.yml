@@ -1,4 +1,4 @@
-service: final-project-workflow
+service: final-project-workflow-ia
 frameworkVersion: "4"
 
 custom:
