@@ -4,3 +4,4 @@ samples/
 .venv/
 __pycache__/
 .serverless/
+node_modules/

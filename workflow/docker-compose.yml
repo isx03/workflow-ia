@@ -1,0 +1,15 @@
+services:
+  serverless:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    tty: true
+    stdin_open: true
+    ports:
+      - "8085:8085" # Puerto usado por `serverless login`
+    volumes:
+      - .:/app # Proyecto completo
+      - ~/.aws:/root/.aws:ro # Credenciales AWS (solo lectura)
+      #env_file:
+      #- .env
+    working_dir: /app
