@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 import boto3
 import jwt
 import base64
@@ -192,9 +193,10 @@ def start_workflow(event, context):
                 )
                 executions.append(response.get('executionArn'))
             except Exception as loop_e:
+                tb = traceback.format_exc()
                 error_msg = f"File '{f.get('file_name', 'unknown')}': {type(loop_e).__name__}: {loop_e}"
-                print(f"File skipped due to error processing: {error_msg}")
-                errors.append(error_msg)
+                print(f"File skipped due to error processing: {error_msg}\n{tb}")
+                errors.append(f"{error_msg} | Traceback: {tb}")
 
         if len(executions) == 0:
             return generate_response(400, {"message": "No valid files processed", "errors": errors})
