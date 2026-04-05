@@ -1,4 +1,4 @@
-service: workflow-ia
+service: final-project-workflow-ia
 frameworkVersion: "4"
 
 provider:
