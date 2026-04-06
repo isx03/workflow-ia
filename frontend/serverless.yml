@@ -1,4 +1,4 @@
-org: geraldocolchado
+org: israelfloresutecorg
 app: evaltisk-app
 service: evaltisk-app
 
@@ -13,7 +13,7 @@ plugins:
   - serverless-plugin-scripts
 
 custom:
-  bucketName: evaltisk-app-${sls:stage}
+  bucketName: evaltisk-app-${sls:stage}-${aws:accountId}
   s3Sync:
     - bucketName: ${self:custom.bucketName}
       localDir: dist
