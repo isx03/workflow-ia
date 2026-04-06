@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,23 +30,6 @@ const RequestDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    const fetch = async () => {
-      const { data: req } = await supabase
-        .from("evaluation_requests")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      const { data: docs } = await supabase
-        .from("evaluation_documents")
-        .select("*")
-        .eq("request_id", id);
-
-      setRequest(req);
-      setDocuments(docs ?? []);
-      setLoading(false);
-    };
-    fetch();
   }, [id]);
 
   const downloadCsv = () => {
