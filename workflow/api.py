@@ -181,10 +181,18 @@ def start_workflow(event, context):
             parsed_files, form_fields = parse_multipart_data(body_bytes, content_type)
             files = parsed_files
             instructions_path = form_fields.get('instructions_path', s3_instructions_path)
+            # email_send opcional: reemplaza el email del token
+            email_send = form_fields.get('email_send', '').strip()
+            if email_send:
+                user_email = email_send
         else:
             # --- Modo JSON (backward compatible) ---
             body_json = json.loads(raw_body)
             instructions_path = body_json.get('instructions_path', s3_instructions_path)
+            # email_send opcional: reemplaza el email del token
+            email_send = body_json.get('email_send', '').strip()
+            if email_send:
+                user_email = email_send
             for f in body_json.get('files', []):
                 file_name = f.get('file_name') or f.get('name')
                 content_b64 = f.get('content_base64')

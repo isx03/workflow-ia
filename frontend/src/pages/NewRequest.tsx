@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import workflowApi from "@/lib/workflowApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,45 +45,31 @@ const NewRequest = () => {
 
     setLoading(true);
     try {
-      // Create the evaluation request
-      const { data: request, error: reqError } = await supabase
-        .from("evaluation_requests")
-        .insert({
-          user_id: user.id,
-          tenant_name: resultEmail.trim().split('@')[0] || "Desconocido",
-          result_email: resultEmail.trim(),
-          status: "pendiente",
-        })
-        .select()
-        .single();
+      const formData = new FormData();
 
-      if (reqError) throw reqError;
-
-      // Upload documents
+      // Adjuntar archivos PDF
       for (const file of files) {
-        const filePath = `${user.id}/${request.id}/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("evaluation-documents")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { error: docError } = await supabase
-          .from("evaluation_documents")
-          .insert({
-            request_id: request.id,
-            file_name: file.name,
-            file_path: filePath,
-            file_size: file.size,
-          });
-
-        if (docError) throw docError;
+        formData.append("files", file, file.name);
       }
 
-      toast({ title: "Solicitud creada exitosamente", description: "Tu solicitud ha sido enviada a evaluación." });
+      // email_send es opcional
+      const email = resultEmail.trim();
+      if (email) {
+        formData.append("email_send", email);
+      }
+
+      await workflowApi.post("/workflow", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast({
+        title: "Solicitud enviada exitosamente",
+        description: "Tu solicitud ha sido enviada a evaluación. Recibirás los resultados por correo.",
+      });
       navigate("/solicitudes");
     } catch (error: any) {
-      toast({ title: "Error al crear solicitud", description: error.message, variant: "destructive" });
+      const message = error.response?.data?.message || error.message || "Error desconocido";
+      toast({ title: "Error al enviar solicitud", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -101,15 +87,17 @@ const NewRequest = () => {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="resultEmail">Correo para recibir resultados</Label>
+              <Label htmlFor="resultEmail">Correo para recibir resultados (opcional)</Label>
               <Input
                 id="resultEmail"
                 type="email"
                 value={resultEmail}
                 onChange={(e) => setResultEmail(e.target.value)}
-                required
                 placeholder="resultados@email.com"
               />
+              <p className="text-xs text-muted-foreground">
+                Si lo dejas vacío, se usará el correo de tu cuenta.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -149,7 +137,7 @@ const NewRequest = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || files.length === 0}>
               {loading ? "Enviando..." : "Enviar a Evaluación"}
             </Button>
           </CardContent>
