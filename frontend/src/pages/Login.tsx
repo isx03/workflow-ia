@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import workflowApi, { setWorkflowToken } from "@/lib/workflowApi";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,16 +15,21 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refreshAuth } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Error al iniciar sesión", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      const { data } = await workflowApi.post("/login", { email, password });
+      setWorkflowToken(data.token);
+      refreshAuth();
       navigate("/solicitudes");
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || "Error desconocido";
+      toast({ title: "Error al iniciar sesión", description: message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 

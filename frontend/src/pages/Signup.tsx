@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import workflowApi from "@/lib/workflowApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const Signup = () => {
   const [fullName, setFullName] = useState("");
-  const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,20 +19,19 @@ const Signup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, company },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Error al registrarse", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "¡Registro exitoso!", description: "Revisa tu correo para confirmar tu cuenta." });
+    try {
+      await workflowApi.post("/register", {
+        name: fullName,
+        email,
+        password,
+      });
+      toast({ title: "¡Registro exitoso!", description: "Ahora puedes iniciar sesión." });
       navigate("/login");
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || "Error desconocido";
+      toast({ title: "Error al registrarse", description: message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,10 +51,6 @@ const Signup = () => {
             <div className="space-y-2">
               <Label htmlFor="fullName">Nombre completo</Label>
               <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Juan Pérez" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
-              <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Mi Inmobiliaria (opcional)" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Correo electrónico</Label>
