@@ -132,8 +132,8 @@ def generate_report(event, context):
         except:
             groq_data = {"raw": groq_response_str}
 
-        tenant_name = "Desconocido"
-        for k in ["Nombre", "nombre", "Inquilino", "inquilino", "Tenant", "tenant", "tenant_name", "Nombre completo"]:
+        tenant_name = ""
+        for k in ["nombres"]:
             if k in groq_data:
                 tenant_name = str(groq_data[k])
                 break

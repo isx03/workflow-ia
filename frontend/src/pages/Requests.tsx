@@ -1,77 +1,90 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import workflowApi from "@/lib/workflowApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Download } from "lucide-react";
 
-interface EvaluationRequest {
+interface EvaluationResult {
   id: string;
-  tenant_name: string;
-  tenant_dni?: string;
-  status: string;
-  result_email: string;
-  created_at: string;
-  score: number | null;
+  nombres: string;
+  apellidos: string;
+  dni: string;
+  capacidad_pago: string | number;
+  evaluacion_general: string;
+  nivel_riesgo: string;
+  recomendacion: string;
+  justificacion: string;
+  createdAt: string;
 }
+
+const recomendacionStyle = (value: string): { label: string; className: string } => {
+  const upper = value.toUpperCase();
+  if (upper === "APROBADO") {
+    return { label: "APROBADO", className: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" };
+  }
+  if (upper === "APROBADO_CON_CONDICIONES") {
+    return { label: "APROBADO CON CONDICIONES", className: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" };
+  }
+  if (upper === "RECHAZADO") {
+    return { label: "RECHAZADO", className: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
+  }
+  return { label: value, className: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" };
+};
 
 const Requests = () => {
   const { user } = useAuth();
-  const [requests, setRequests] = useState<EvaluationRequest[]>([]);
+  const [results, setResults] = useState<EvaluationResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("todos");
+  const [statusFilter, setStatusFilter] = useState("TODOS");
 
   useEffect(() => {
     if (!user) return;
-    const fetchRequests = async () => {
-      const { data } = await supabase
-        .from("evaluation_requests")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setRequests(data ?? []);
-      setLoading(false);
+    const fetchResults = async () => {
+      try {
+        const { data } = await workflowApi.get("/results");
+        setResults(data.results ?? []);
+      } catch (err) {
+        console.error("Error fetching results:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchRequests();
+    fetchResults();
   }, [user]);
 
-  const getEvaluationResult = (score: number | null) => {
-    if (score === null) return { text: "Pendiente", variant: "secondary" as const };
-    if (score >= 70) return { text: "Aprobado", variant: "default" as const };
-    return { text: "Rechazado", variant: "destructive" as const };
-  };
-
-  const filtered = requests.filter((r) => {
-    const matchSearch = r.tenant_name.toLowerCase().includes(search.toLowerCase());
-    const resultText = getEvaluationResult(r.score).text.toLowerCase();
-    const matchStatus = statusFilter === "todos" || resultText === statusFilter;
+  const filtered = results.filter((r) => {
+    const fullName = `${r.nombres} ${r.apellidos}`.toLowerCase();
+    const dni = (r.dni || "").toLowerCase();
+    const term = search.toLowerCase();
+    const matchSearch = fullName.includes(term) || dni.includes(term);
+    const matchStatus =
+      statusFilter === "TODOS" || r.recomendacion.toUpperCase() === statusFilter;
     return matchSearch && matchStatus;
   });
 
   const handleDownloadCSV = () => {
     if (filtered.length === 0) return;
 
-    const headers = ["Inquilino", "DNI", "Fecha", "Email", "Estado", "Resultado"];
+    const headers = ["Nombres", "Apellidos", "DNI", "Capacidad de Pago", "Evaluación General", "Nivel de Riesgo", "Recomendación", "Justificación", "Fecha"];
     const csvContent = [
       headers.join(","),
-      ...filtered.map(r => {
-        const result = getEvaluationResult(r.score).text;
-        return `"${r.tenant_name}","${r.tenant_dni || "-"}","${new Date(r.created_at).toLocaleDateString("es-ES")}","${r.result_email}","${r.status}","${result}"`;
-      })
+      ...filtered.map((r) => {
+        const rec = r.recomendacion.replace(/_/g, " ");
+        return `"${r.nombres}","${r.apellidos}","${r.dni}","${r.capacidad_pago}","${r.evaluacion_general}","${r.nivel_riesgo}","${rec}","${r.justificacion}","${r.createdAt}"`;
+      }),
     ].join("\n");
 
-    // Agregamos BOM para que Excel lea correctamente tildes y caracteres en UTF-8
-    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "inquilinos_evaluados.csv");
+    link.setAttribute("download", "evaluaciones.csv");
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -100,21 +113,21 @@ const Requests = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre..."
+                placeholder="Buscar por nombre o DNI..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-44">
-                <SelectValue placeholder="Resultado" />
+              <SelectTrigger className="w-full sm:w-56">
+                <SelectValue placeholder="Recomendación" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="pendiente">Pendiente</SelectItem>
-                <SelectItem value="aprobado">Aprobado</SelectItem>
-                <SelectItem value="rechazado">Rechazado</SelectItem>
+                <SelectItem value="TODOS">Todos</SelectItem>
+                <SelectItem value="APROBADO">Aprobado</SelectItem>
+                <SelectItem value="APROBADO_CON_CONDICIONES">Aprobado con condiciones</SelectItem>
+                <SelectItem value="RECHAZADO">Rechazado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -126,30 +139,42 @@ const Requests = () => {
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
-              {requests.length === 0 ? "No tienes solicitudes aún." : "No se encontraron resultados."}
+              {results.length === 0 ? "No tienes evaluaciones aún." : "No se encontraron resultados."}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Inquilino</TableHead>
+                    <TableHead>Nombres</TableHead>
+                    <TableHead>Apellidos</TableHead>
                     <TableHead>DNI</TableHead>
+                    <TableHead>Capacidad de Pago</TableHead>
+                    <TableHead>Evaluación General</TableHead>
+                    <TableHead>Nivel de Riesgo</TableHead>
+                    <TableHead>Recomendación</TableHead>
+                    <TableHead>Justificación</TableHead>
                     <TableHead>Fecha</TableHead>
-                    <TableHead>Resultado de evaluación</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((r) => {
-                    const result = getEvaluationResult(r.score);
+                    const rec = recomendacionStyle(r.recomendacion);
                     return (
                       <TableRow key={r.id}>
-                        <TableCell className="font-medium">{r.tenant_name}</TableCell>
-                        <TableCell>{r.tenant_dni || "-"}</TableCell>
-                        <TableCell>{new Date(r.created_at).toLocaleDateString("es-ES")}</TableCell>
+                        <TableCell className="font-medium">{r.nombres}</TableCell>
+                        <TableCell>{r.apellidos}</TableCell>
+                        <TableCell>{r.dni}</TableCell>
+                        <TableCell>{r.capacidad_pago}</TableCell>
+                        <TableCell>{r.evaluacion_general}</TableCell>
+                        <TableCell>{r.nivel_riesgo}</TableCell>
                         <TableCell>
-                          <Badge variant={result.variant}>{result.text}</Badge>
+                          <span className={rec.className}>{rec.label}</span>
                         </TableCell>
+                        <TableCell className="max-w-xs truncate" title={r.justificacion}>
+                          {r.justificacion}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{r.createdAt}</TableCell>
                       </TableRow>
                     );
                   })}

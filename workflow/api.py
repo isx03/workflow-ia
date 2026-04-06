@@ -79,11 +79,21 @@ def generate_response(status_code, body):
 def get_user_from_token(event):
     headers = event.get('headers', {})
     auth_header = headers.get('authorization') or headers.get('Authorization')
+    print(f"[DEBUG] auth_header = '{auth_header}'")
     if not auth_header or not auth_header.startswith('Bearer '):
         raise Exception("Missing or invalid token")
-    token = auth_header.split(' ')[1]
+    token = auth_header.split(' ', 1)[1].strip().strip('"')
+    print(f"[DEBUG] token segments = {len(token.split('.'))}")
     decoded = jwt.decode(token, jwt_secret, algorithms=['HS256'])
     return decoded
+
+def format_created_at(iso_str):
+    """Convierte ISO 8601 a dd-mm-YYYY HH:mm AM/PM."""
+    try:
+        dt = datetime.datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
+        return dt.strftime('%d-%m-%Y %I:%M %p')
+    except Exception:
+        return iso_str
 
 def list_results(event, context):
     try:
@@ -93,7 +103,31 @@ def list_results(event, context):
         response = results_table.query(
             KeyConditionExpression=Key('userId').eq(user_id)
         )
-        return generate_response(200, {"results": response.get('Items', [])})
+
+        FIELDS = [
+            'id', 'nombres', 'apellidos', 'dni', 'capacidad_pago',
+            'evaluacion_general', 'nivel_riesgo', 'recomendacion',
+            'justificacion', 'createdAt'
+        ]
+
+        items = response.get('Items', [])
+        results = []
+        for item in items:
+            row = {}
+            for field in FIELDS:
+                val = item.get(field, '')
+                # Decimal -> int/float para JSON
+                if isinstance(val, __import__('decimal').Decimal):
+                    val = int(val) if val == int(val) else float(val)
+                if field == 'createdAt':
+                    val = format_created_at(str(val))
+                # Todo en uppercase
+                if isinstance(val, str):
+                    val = val.upper()
+                row[field] = val
+            results.append(row)
+
+        return generate_response(200, {"results": results})
 
     except Exception as e:
         print(e)
