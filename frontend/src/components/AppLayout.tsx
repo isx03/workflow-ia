@@ -6,8 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, FileText, Search, LogOut, ShieldCheck } from "lucide-react";
 
 const navItems = [
-  { to: "/solicitudes/nueva", label: "Nueva Solicitud", icon: FileText },
-  { to: "/solicitudes", label: "Consultar", icon: Search },
+
 ];
 
 export const AppLayout = () => {
@@ -22,11 +21,10 @@ export const AppLayout = () => {
           key={item.to}
           to={item.to}
           onClick={onClick}
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent ${
-            location.pathname === item.to
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent ${location.pathname === item.to
               ? "bg-accent text-accent-foreground"
               : "text-muted-foreground"
-          }`}
+            }`}
         >
           <item.icon className="h-4 w-4" />
           {item.label}
