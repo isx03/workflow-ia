@@ -18,7 +18,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 RUN npm install -g serverless@4
 
 # ── Dependencias de Python del proyecto ──
-COPY requirements.txt /app/requirements.txt
+COPY ./workflow/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # ── Directorio de trabajo ──
