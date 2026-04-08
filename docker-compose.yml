@@ -9,7 +9,5 @@ services:
       - "8085:8085" # Puerto usado por `serverless login`
     volumes:
       - .:/app # Proyecto completo
-      - ~/.aws:/root/.aws:ro # Credenciales AWS (solo lectura)
-      #env_file:
-      #- .env
+      - ./.aws:/root/.aws:ro # Credenciales AWS (solo lectura)
     working_dir: /app
