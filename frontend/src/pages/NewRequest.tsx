@@ -137,9 +137,14 @@ const NewRequest = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading || files.length === 0}>
-              {loading ? "Enviando..." : "Enviar a Evaluación"}
-            </Button>
+            <div className="flex gap-4">
+              <Button type="button" variant="outline" className="w-full" onClick={() => navigate("/solicitudes")} disabled={loading}>
+                Cancelar
+              </Button>
+              <Button type="submit" className="w-full" disabled={loading || files.length === 0}>
+                {loading ? "Enviando..." : "Enviar a Evaluación"}
+              </Button>
+            </div>
           </CardContent>
         </form>
       </Card>
